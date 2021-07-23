@@ -3,7 +3,12 @@ const builtin = std.builtin;
 const os = std.os;
 const linux = os.linux;
 
-fn getWindowSize(rows: *i32, cols: *i32) !void {
+const kernel32 = os.windows.kernel32;
+const GetConsoleScreenBufferInfo = kernel32.GetConsoleScreenBufferInfo;
+const GetStdHandle = kernel32.GetStdHandle;
+const GetLastError = kernel32.GetLastError;
+
+fn getWindowSizeLinux(rows: *i32, cols: *i32) !void {
     var ws: linux.winsize = undefined;
     var errno = linux.ioctl(std.os.STDOUT_FILENO, linux.TIOCGWINSZ, @ptrToInt(&ws));
     while (true) {
@@ -22,6 +27,37 @@ fn getWindowSize(rows: *i32, cols: *i32) !void {
         }
     }
 }
+
+fn getWindowSizeWindows(rows: *i32, cols: *i32) !void {
+    var csbi: kernel32.CONSOLE_SCREEN_BUFFER_INFO = undefined;
+    var maybe_handle = GetStdHandle(kernel32.STD_OUTPUT_HANDLE);
+    if (maybe_handle) |handle| {
+        if (handle == kernel32.INVALID_HANDLE_VALUE) {
+            switch (GetLastError()) {
+                .INVALID_WINDOW_HANDLE => unreachable,
+                .INVALID_PARAMETER => unreachable,
+                else => |err| return os.windows.unexpectedError(err),
+            }
+        }
+        var r = GetConsoleScreenBufferInfo(handle, &csbi);
+        if (r == 0) {
+            switch (GetLastError()) {
+                .INVALID_WINDOW_HANDLE => unreachable,
+                .INVALID_PARAMETER => unreachable,
+                else => |err| return os.windows.unexpectedError(err),
+            }
+        }
+        cols.* = csbi.srWindow.Right - csbi.srWindow.Left;
+        rows.* = csbi.srWindow.Bottom - csbi.srWindow.Top;
+    } else {
+        return error.nullHandle;
+    }
+}
+
+const getWindowSize = switch (builtin.os.tag) {
+    .windows => getWindowSizeWindows,
+    else => getWindowSizeLinux,
+};
 
 pub fn main() anyerror!void {
     var rows: i32 = undefined;
