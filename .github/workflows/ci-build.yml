@@ -1,0 +1,25 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - v0.*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: master
+      - run: zig build -Drelease-safe=true -Dtarget=x86_64-linux-gnu
+      - run: zig build -Drelease-safe=true -Dtarget=x86_64-windows-gnu
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: master
+      - run: zig fmt --check .
