@@ -11,19 +11,19 @@ const GetLastError = kernel32.GetLastError;
 
 fn getWindowSizeLinux(rows: *i32, cols: *i32) !void {
     var ws: linux.winsize = undefined;
-    var errno = linux.ioctl(std.os.STDOUT_FILENO, linux.TIOCGWINSZ, @ptrToInt(&ws));
+    var result = linux.ioctl(std.os.STDOUT_FILENO, linux.T.IOCGWINSZ, @ptrToInt(&ws));
     while (true) {
-        switch (errno) {
-            0 => {
+        switch (linux.getErrno(result)) {
+            .SUCCESS => {
                 cols.* = ws.ws_col;
                 rows.* = ws.ws_row;
                 return;
             },
-            os.EBADF => unreachable,
-            os.EFAULT => unreachable,
-            os.EINVAL => unreachable,
-            os.ENOTTY => unreachable,
-            os.EINTR => continue, // Interrupted function call, try again
+            .BADF => unreachable,
+            .FAULT => unreachable,
+            .INVAL => unreachable,
+            .NOTTY => unreachable,
+            .INTR => continue, // Interrupted function call, try again
             else => |err| return os.unexpectedErrno(err),
         }
     }
