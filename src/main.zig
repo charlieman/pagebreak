@@ -1,8 +1,9 @@
 const std = @import("std");
-const builtin = std.builtin;
+const builtin = @import("builtin");
 const os = std.os;
 const linux = os.linux;
 
+const windows = os.windows;
 const kernel32 = os.windows.kernel32;
 const GetConsoleScreenBufferInfo = kernel32.GetConsoleScreenBufferInfo;
 const GetStdHandle = kernel32.GetStdHandle;
@@ -29,10 +30,10 @@ fn getWindowSizeLinux(rows: *i32, cols: *i32) !void {
 }
 
 fn getWindowSizeWindows(rows: *i32, cols: *i32) !void {
-    var csbi: kernel32.CONSOLE_SCREEN_BUFFER_INFO = undefined;
-    var maybe_handle = GetStdHandle(kernel32.STD_OUTPUT_HANDLE);
+    var csbi: windows.CONSOLE_SCREEN_BUFFER_INFO = undefined;
+    var maybe_handle = GetStdHandle(windows.STD_OUTPUT_HANDLE);
     if (maybe_handle) |handle| {
-        if (handle == kernel32.INVALID_HANDLE_VALUE) {
+        if (handle == windows.INVALID_HANDLE_VALUE) {
             switch (GetLastError()) {
                 .INVALID_WINDOW_HANDLE => unreachable,
                 .INVALID_PARAMETER => unreachable,
