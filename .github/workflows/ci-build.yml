@@ -16,12 +16,14 @@ jobs:
           version: master
 
       - name: Build Linux version
-        run: zig build -Drelease-safe=true -Dtarget=x86_64-linux-gnu
+        run: zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-gnu
+
       - name: Build Windows version
-        run: zig build -Drelease-safe=true -Dtarget=x86_64-windows-gnu
+        run: zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-windows-gnu
 
       - name: Create Linux Tarball
         run: tar czvf pagebreak.tar.gz -C zig-out/bin/ pagebreak
+
       - name: Create Windows Zip
         run: 7z a pagebreak.zip ./zig-out/bin/pagebreak.exe
 
