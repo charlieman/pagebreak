@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const os = std.os;
-const linux = os.linux;
+const system = os.system;
 
 const windows = os.windows;
 const kernel32 = os.windows.kernel32;
@@ -14,11 +14,11 @@ const Size = struct {
     y: u16,
 };
 
-fn getWindowSizeLinux() !Size {
-    var ws: linux.winsize = undefined;
-    var result = linux.ioctl(std.os.STDOUT_FILENO, linux.T.IOCGWINSZ, @ptrToInt(&ws));
+fn getWindowSizePosix() !Size {
+    var ws: system.winsize = undefined;
+    var result = system.ioctl(os.STDOUT_FILENO, system.T.IOCGWINSZ, @ptrToInt(&ws));
     while (true) {
-        switch (linux.getErrno(result)) {
+        switch (system.getErrno(result)) {
             .SUCCESS => {
                 return Size{
                     .x = ws.ws_col,
@@ -66,7 +66,7 @@ fn getWindowSizeWindows() !Size {
 
 const getWindowSize = switch (builtin.os.tag) {
     .windows => getWindowSizeWindows,
-    else => getWindowSizeLinux,
+    else => getWindowSizePosix,
 };
 
 pub fn main() anyerror!void {
